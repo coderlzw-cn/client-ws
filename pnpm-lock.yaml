@@ -7,35 +7,34 @@ settings:
 importers:
 
   .:
-    dependencies:
+    devDependencies:
+      '@eslint/js':
+        specifier: ^9.8.0
+        version: 9.8.0
       '@rollup/plugin-commonjs':
         specifier: ^26.0.1
         version: 26.0.1(rollup@4.20.0)
       '@rollup/plugin-node-resolve':
         specifier: ^15.2.3
         version: 15.2.3(rollup@4.20.0)
-      rollup:
-        specifier: ^4.20.0
-        version: 4.20.0
-      rollup-plugin-cleaner:
-        specifier: ^1.0.0
-        version: 1.0.0(rollup@4.20.0)
-      rollup-plugin-typescript2:
-        specifier: ^0.36.0
-        version: 0.36.0(rollup@4.20.0)(typescript@5.5.4)
-    devDependencies:
-      '@eslint/js':
-        specifier: ^9.8.0
-        version: 9.8.0
       eslint:
         specifier: ~9.8.0
         version: 9.8.0
       globals:
         specifier: ^15.9.0
         version: 15.9.0
+      rollup:
+        specifier: ^4.20.0
+        version: 4.20.0
+      rollup-plugin-cleaner:
+        specifier: ^1.0.0
+        version: 1.0.0(rollup@4.20.0)
       rollup-plugin-terser:
         specifier: ^7.0.2
         version: 7.0.2(rollup@4.20.0)
+      rollup-plugin-typescript2:
+        specifier: ^0.36.0
+        version: 0.36.0(rollup@4.20.0)(typescript@5.5.4)
       typescript:
         specifier: ^5.5.4
         version: 5.5.4
