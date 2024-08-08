@@ -1,0 +1,54 @@
+name: npm publish  # 定义工作流名称
+
+on:
+  workflow_dispatch:  # 允许手动触发工作流，默认是不开启的
+  push: # 当有代码推送到仓库时触发
+    tags:
+      - 'v*.*.*'  # 监听所有以 v 开头的标签，比如 v1.0.0
+
+jobs:
+  build: # 工作流程中的一个作业
+    runs-on: ubuntu-latest  # 指定运行作业的虚拟环境
+    steps:
+      - name: Checkout repository  # 步骤名称
+        uses: actions/checkout@v4  # 使用 GitHub 官方提供的 Checkout 动作，拷贝最新的代码到虚拟机上
+      - name: Set up Node.js  # 步骤名称
+        uses: actions/setup-node@v4  # 使用官方的 actions/setup-node@v4 来设置 Node.js 环境
+        with:
+          node-version: 20  # 使用 Node.js 20 版本
+      - name: enable pnpm  # 步骤名称
+        run: corepack enable
+      - name: install Dependencies  # 步骤名称
+        run: pnpm i
+      - name: Build Project
+        run: pnpm build
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts  # 构建产物名称
+          path: ./dist  # 构建产物路径
+
+  publish-npm:
+    needs: build  # 依赖 build 作业，确保在 build 成功后再执行
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org/
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts  # 构建产物名称，需与上传时的名称一致
+          path: ./dist  # 下载后存放路径
+      - name: List Build Directory  # 列出构建目录中的文件
+        run: ls -al ./dist
+      - name: List Publish Directory  # 列出发布目录中的文件
+        run: ls -al ./
+      - name: Publish to NPM  # 步骤名称
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}  # 使用 GitHub Secrets 中配置的 NPM 认证 token
