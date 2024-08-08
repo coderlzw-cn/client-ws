@@ -14,7 +14,7 @@ pnpm add @coderlzw/client-ws
 
 # 使用
 
-```shell
+```ts
 import ClientWs from '@coderlzw/client-ws';
 
 const wsClient = new ClientWs({
