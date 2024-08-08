@@ -1,177 +1,110 @@
 # 介绍
 
-一个用于管理 cookies 和本地/会话存储的实用工具库，支持可选的加密功能。
+`ClientWs` 是一个灵活且功能丰富的 `WebSocket` 客户端类，用于与 `WebSocket` 服务器进行通信。它支持自动重连、消息缓存和事件监听等功能
 
-## 目录
+# 安装
 
-- [安装](#安装)
-- [使用说明](#使用说明)
-    - [Cookies](#cookies)
-    - [存储](#存储)
-- [API](#api)
-    - [Cookies API](#cookies-api)
-    - [存储 API](#存储-api)
-- [贡献](#贡献)
-- [许可证](#许可证)
-
-## 安装
-
-可以使用 npm 或 yarn 安装这个库：
-
-```bash
-npm install @coderlzw/store
-# or
-yarn add @coderlzw/store
-# or
-pnpm add @coderlzw/store
+```shell
+npm add @coderlzw/client-ws
+// or
+yarn add @coderlzw/client-ws
+// or
+pnpm add @coderlzw/client-ws
 ```
 
-# 使用说明
+# 使用
 
-## Cookies
+```shell
+import ClientWs from '@coderlzw/client-ws';
 
-```ts
-import {cookie} from '@coderlzw/store';
-
-// 示例 1: 设置单个 Cookie
-cookie.setCookie({
-    key: 'userToken',
-    value: 'abc123',
-    expires: 'Fri, 31 Dec 2024 23:59:59 GMT',
-    maxAge: 3600, // 1 小时
-    path: '/',
-    domain: 'example.com',
-    secure: true
+const wsClient = new ClientWs({
+  url: 'wss://example.com/socket', // WebSocket 服务器地址
+  timeout: 5000, // 可选，连接超时时间（毫秒）
+  reconnect: true, //可选，是否自动重连，默认为 true
+  reconnectInterval: 5000, //可选， 重连间隔（毫秒），默认为 5000
+  reconnectMaxInterval: 10000, // 可选，最大重连间隔（毫秒），默认为 10000
+  reconnectMaxTimes: 10, // 可选，最大重连次数，默认为 10
+  uniqueKey: 'message_id', // 消息唯一标识符，。默认值为 message_id
+  cacheMessage: true, // 是否缓存未发送的消息，默认值为 false
+  maxCacheMessage: 100 // 缓存消息的最大数量，默认值为 100
 });
 
-// 示例 2: 批量设置 Cookies
-cookie.setCookies([
-    {
-        key: 'sessionID',
-        value: 'xyz456',
-        expires: 'Fri, 31 Dec 2024 23:59:59 GMT',
-        path: '/'
-    },
-    {
-        key: 'preferences',
-        value: 'darkMode=true',
-        path: '/'
-    }
-]);
+// 连接到 WebSocket 服务器
+wsClient.connect();
 
-// 示例 3: 获取单个 Cookie
-const userToken = cookie.getCookie('userToken');
+// 监听事件
+wsClient.on('open', (event) => {
+  console.log('WebSocket 连接已打开', event);
+});
 
-// 示例 4: 获取多个 Cookies
-const cookies = cookie.getCookies(['sessionID', 'preferences']);
+wsClient.on('message', (event) => {
+  console.log('收到消息:', event.data);
+});
 
-// 示例 5: 删除单个 Cookie
-const isRemoved = cookie.removeCookie('userToken');
+wsClient.on('close', (event) => {
+  console.log('WebSocket 连接已关闭', event);
+});
 
-// 示例 6: 删除多个 Cookies
-const areRemoved = cookie.removeCookies(['sessionID', 'preferences']);
+wsClient.on('error', (event) => {
+  console.error('WebSocket 错误:', event);
+});
 
-// 示例 7: 清空所有 Cookies
-const isCleared = cookie.clearCookies();
+// 发送消息
+wsClient.sendMessage({ text: 'Hello, World!' }, (error, response) => {
+  if (error) {
+    console.error('消息发送失败:', error);
+  } else {
+    console.log('消息发送成功:', response);
+  }
+});
+
+// 使用异步发送消息
+wsClient.sendMessageAsync({ text: 'Hello, Async!' })
+  .then(response => {
+    console.log('异步消息发送成功:', response);
+  })
+  .catch(error => {
+    console.error('异步消息发送失败:', error);
+  });
+
+// 关闭连接
+wsClient.close();
+
+// 销毁客户端
+wsClient.destroy();
 ```
 
-# 存储
+# 方法
 
-```ts
-import {storage, StorageTypeEnum, CryptoJS} from "@coderlzw/store";
+- `connect()`: 连接到 WebSocket 服务器。
+- `sendMessage<R = any, S = any>(data: S, callback?: MessageCallback<R>)`: 发送消息。如果 `WebSocket` 未连接且
+  `cacheMessage`
+  选项为 true，则消息会被缓存。`data` 可以是字符串或对象。
+- `sendMessageAsync<R = any, S = any>(data: S): Promise<R>`: 发送消息并返回一个 Promise。
+- `close()`: 关闭 WebSocket 连接。
+- `destroy()`: 销毁 WebSocket 客户端，移除所有监听器并关闭连接。
+- `on(event: string, listener: SocketEventListener)`: 添加事件监听器。支持的事件包括 `open`、`close`、`message` 和 `error`。
+- `once(event: string, listener: SocketEventListener)`: 添加一个一次性事件监听器。
+- `removeListener(event: string)`: 移除指定事件的所有监听器。
+- `removeAllListeners()`: 移除所有事件监听器。
 
-// 示例数据
-const secretKey = "mySecretKey";
+# 配置选项（Options）
 
-// 1. 存储数据到 sessionStorage（加密）
-storage.setStorage({
-    key: "userSession",
-    value: {username: "JohnDoe", role: "admin"},
-    type: StorageTypeEnum.Session,
-    expire: 3600000, // 1小时过期
-    encrypt: true,
-    secretKey: secretKey
-});
-
-// 2. 存储数据到 localStorage（未加密）
-storage.setStorage({
-    key: "userPreferences",
-    value: {theme: "dark", language: "en"},
-    type: StorageTypeEnum.Local,
-    expire: 86400000, // 1天过期
-    encrypt: false
-});
-
-// 3. 获取 sessionStorage 中的加密数据
-const userSession = storage.getStorage<{ username: string; role: string }>({
-    key: "userSession",
-    type: StorageTypeEnum.Session,
-    secretKey: secretKey
-});
-
-// 4. 获取 localStorage 中的未加密数据
-const userPreferences = storage.getStorage<{ theme: string; language: string }>({
-    key: "userPreferences",
-    type: StorageTypeEnum.Local
-});
-
-// 5. 获取 sessionStorage 中所有数据
-const allSessionStorage = storage.getAllStorage(StorageTypeEnum.Session);
-
-// 6. 获取 localStorage 中所有数据
-const allLocalStorage = storage.getAllStorage(StorageTypeEnum.Local);
-
-// 7. 删除 sessionStorage 中的某个键值对
-storage.removeStorage({key: "userSession", type: StorageTypeEnum.Session});
-
-// 8. 清空 localStorage
-storage.clearStorage(StorageTypeEnum.Local);
-```
-
-# API
-
-## Cookies API
-
-- `setCookie(options: CookieOptions): boolean`：设置一个 cookie，返回 true 表示成功设置 cookie，否则返回 false。
-    - `key`: `Cookie` 的名称。
-    - `value`: `Cookie` 的值。
-    - `expires`（可选）：`Cookie` 的过期时间。
-    - `maxAge`（可选）：`Cookie` 的最大存活时间，单位为秒。
-    - `path`（可选）：`Cookie` 的路径。
-    - `domain`（可选）：`Cookie` 的域名。
-    - `secure`（可选）：是否为安全 cookie。
-- `getCookie(key: string): string | null`：获取指定名称的 cookie 值。返回 cookie 的值或 null（如果 cookie 不存在）。
-- `removeCookie(key: string): boolean`：删除指定名称的 cookie。返回 true 表示成功删除 cookie，否则返回 false。
-- `clearCookies(): boolean`：清空所有 cookies。返回 true 表示成功清空所有 cookies，否则返回 false。
-
-## Storage API
-
-- `setStorage(data: StorageData<K, V>): void`：设置一个存储值，支持可选的加密功能。
-    - `key`: 存储键。
-    - `value`: 存储值。
-    - `type`: 存储类型 (`sessionStorage` 或 `localStorage`)。
-    - `expire`（可选）：过期时间，单位为毫秒。
-    - `encrypt`（可选）：是否加密存储值。
-    - `secretKey`（可选）：加密密钥。
-
-- `getStorage(params: { key: K; type: StorageTypeVal; secretKey?: string; }): V | null`：从存储中获取一个值。返回存储的值或
-  null（如果项不存在或已过期）。
-    - `key`: 存储键。
-    - `type`: 存储类型 (`sessionStorage` 或 `localStorage`)。
-    - `secretKey`（可选）：解密密钥。
-
-
-- `removeStorage(params: { key: string; type: StorageTypeVal; }): void`：删除存储项。
-    - `key`: 存储键。
-    - `type`: 存储类型 (sessionStorage 或 localStorage)。
-
-- `clearStorage(type: StorageTypeVal): void`：清空指定存储类型中的所有项。
+- `url: string`：WebSocket 服务器地址。必需。
+- `timeout?: number`：连接超时时间（毫秒），默认 `5000`。
+- `reconnect?: boolean`：是否自动重连，默认 `true`。
+- `reconnectInterval?: number`：重连间隔（毫秒），默认 `5000`。
+- `reconnectMaxInterval?: number`：最大重连间隔（毫秒），默认 `10000`。
+- `reconnectMaxTimes?: number`：最大重连次数，默认为 0 不限制。
+- `uniqueKey?: string`：每条消息携带的唯一标识符，默认为 `message_id`。
+- `cacheMessage?: boolean`：是否缓存发送失败的消息，默认为 `false`。
+- `maxCacheMessage?: number`：缓存消息的最大数量，默认为 `100`。
 
 # 贡献
 
-如果你希望为这个项目做出贡献，请在 GitHub 上提交 [Issues](https://github.com/coderlzw-cn/store/issues)
-或 [Pull Requests](https://github.com/coderlzw-cn/store/pulls)。
+如果你希望为这个项目做出贡献，请在 GitHub 上提交 [Issues](https://github.com/coderlzw-cn/client-ws/issues)
+或 [Pull Requests](https://github.com/coderlzw-cn/client-ws/pulls)。
 
 # 许可证
 
-该项目使用 MIT 许可证 - 详情请参阅 [LICENSE](https://github.com/coderlzw-cn/store/blob/main/LICENSE) 文件。
+该项目使用 MIT 许可证 - 详情请参阅 [LICENSE](https://github.com/coderlzw-cn/client-ws/blob/main/LICENSE) 文件。

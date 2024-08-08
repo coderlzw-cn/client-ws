@@ -5,8 +5,6 @@ interface Options {
     reconnectInterval?: number;  // 重连间隔，6s
     reconnectMaxInterval?: number;  // 最大重连间隔，10s
     reconnectMaxTimes?: number;  // 最大重连次数，默认为 0 不限制
-    binaryType?: "blob" | "arraybuffer";
-    headers?: Record<string, string | number>;
     uniqueKey?: string;        // 每条消息携带一个唯一的key,用于标识这条消息，默认值为 message_id
     cacheMessage?: boolean;   // 是否缓存发送失败的消息，待连接成功后在发送，默认为 false
     maxCacheMessage?: number    // 缓存消息的最大数量，默认值为 100
@@ -41,8 +39,6 @@ export default class ClientWs {
             reconnectInterval: 5000,  // 重连间隔
             reconnectMaxInterval: 10000,  // 最大重连间隔
             reconnectMaxTimes: 0,    // 最大重连次数
-            binaryType: "blob",   // 二进制类型
-            headers: {},  // 请求头
             cacheMessage: false,  // 是否缓存消息
             maxCacheMessage: 100,  // 缓存消息的最大数量
             uniqueKey: "message_id",
@@ -71,6 +67,12 @@ export default class ClientWs {
                     }
                 }
             }, this.options.timeout);
+        }
+    }
+
+    setBinaryType(binaryType: "blob" | "arraybuffer") {
+        if (this.ws) {
+            this.ws.binaryType = binaryType;
         }
     }
 
@@ -187,7 +189,7 @@ export default class ClientWs {
         this.on(event, onceListener);
     }
 
-    off(event: string, listener: SocketEventListener) {
+    private off(event: string, listener: SocketEventListener) {
         const listeners = this.eventListeners[event];
         if (listeners) {
             this.eventListeners[event] = listeners.filter((l) => l !== listener);
