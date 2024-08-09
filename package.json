@@ -17,7 +17,9 @@
   "scripts": {
     "build": "rollup -c",
     "lint:fix": "eslint --fix",
-    "preversion": "npm run lint:fix && npm run build"
+    "preversion": "npm run lint:fix",
+    "version": "npm run build && git add .",
+    "postversion": "git push && git push --tags"
   },
   "publishConfig": {
     "access": "public",
