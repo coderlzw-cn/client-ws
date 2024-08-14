@@ -1,6 +1,6 @@
 {
   "name": "@coderlzw/client-ws",
-  "version": "0.0.1-beta.1",
+  "version": "0.0.1-beta.2",
   "description": "封装浏览器端的 websocket",
   "main": "dist/index.esm.js",
   "types": "dist/types/index.d.ts",
