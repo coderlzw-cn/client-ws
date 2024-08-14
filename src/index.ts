@@ -21,7 +21,7 @@ interface sendMessageQueueItem {
 export default class ClientWs {
     private ws: null | WebSocket = null;
     private options: Required<Options>;
-    private readonly eventListeners: Record<string, SocketEventListener[]> = {};  // 事件监听器  {open: [listener1, listener2]}
+    private readonly _eventListeners: Record<string, SocketEventListener[]> = {};  // 事件监听器  {open: [listener1, listener2]}
     private readonly messageCache: { data: any; callback?: MessageCallback }[] = [];  // 在没有连接的时候缓存消息
     private reconnectAttempts: number = 0;     // 重连次数
     private reconnectTimeout: number | null = null;  // 重连定时器
@@ -146,7 +146,7 @@ export default class ClientWs {
     }
 
     private emit(event: string, data: any) {
-        const listeners = this.eventListeners[event];
+        const listeners = this._eventListeners[event];
         if (listeners && listeners.length > 0) {
             listeners.forEach((listener) => listener(data));
         }
@@ -162,12 +162,12 @@ export default class ClientWs {
             throw new Error(`Event "${event}" is not supported`);
         }
         // 如果没有这个事件的监听器数组,则创建一个空数组
-        if (!this.eventListeners[event]) {
-            this.eventListeners[event] = [];
+        if (!this._eventListeners[event]) {
+            this._eventListeners[event] = [];
         }
         // 如果这个监听器不在这个事件的监听器数组中,则添加进去
-        if (!this.eventListeners[event].includes(listener)) {
-            this.eventListeners[event].push(listener);
+        if (!this._eventListeners[event].includes(listener)) {
+            this._eventListeners[event].push(listener);
         }
     }
 
@@ -190,9 +190,9 @@ export default class ClientWs {
     }
 
     private off(event: string, listener: SocketEventListener) {
-        const listeners = this.eventListeners[event];
+        const listeners = this._eventListeners[event];
         if (listeners) {
-            this.eventListeners[event] = listeners.filter((l) => l !== listener);
+            this._eventListeners[event] = listeners.filter((l) => l !== listener);
         }
     }
 
@@ -259,12 +259,12 @@ export default class ClientWs {
     }
 
     removeListener(event: string) {
-        delete this.eventListeners[event];
+        delete this._eventListeners[event];
     }
 
     removeAllListeners() {
-        Object.keys(this.eventListeners).forEach((key) => {
-            delete this.eventListeners[key];
+        Object.keys(this._eventListeners).forEach((key) => {
+            delete this._eventListeners[key];
         });
     }
 
@@ -272,6 +272,18 @@ export default class ClientWs {
         this.removeAllListeners();
         this.close();
         this.ws = null;
+    }
+
+    get readyState() {
+        return this.ws?.readyState;
+    }
+
+    get url() {
+        return this.ws?.url;
+    }
+
+    get queue() {
+        return this.messageCache;
     }
 
     private generateUniqueKey(): string {
